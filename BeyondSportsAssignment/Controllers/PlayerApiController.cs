@@ -1,13 +1,16 @@
-﻿using BeyondSportsAssignment.DBContext;
+﻿using Azure;
+using BeyondSportsAssignment.DBContext;
 using BeyondSportsAssignment.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using Microsoft.IdentityModel.Tokens;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace BeyondSportsAssignment.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class PlayerApiController : ControllerBase
     {
 
@@ -18,7 +21,7 @@ namespace BeyondSportsAssignment.Controllers
             _dbContext = dbContext;
         }
 
-        [HttpGet("{id}", Name = "GetPlayer")]
+        [HttpGet("GetPlayer/{id}")]
         public async Task<ActionResult<PlayerDTO>> GetPlayer(int id)
         {
             try
@@ -37,27 +40,10 @@ namespace BeyondSportsAssignment.Controllers
             }
         }
 
-        [HttpGet("{id}", Name = "GetPlayersFromTeam")]
-        public async Task<ActionResult<IEnumerable<PlayerDTO>>> GetPlayersFromTeam(int id)
-        {
-            try
-            {
-                var players = await _dbContext.Players.Where(x => x.CurrentTeamId == id).ToListAsync();
-                if (players == null || players.Count == 0)
-                {
-                    return NotFound("No players found for the specified team.");
-                }
-                return Ok(players);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    "An error occurred while fetching players for the specified team.");
-            }
-        }
 
-        [HttpPost(Name = "AddTeam")]
-        public async Task<IActionResult> AddTeam(Player player)
+
+        [HttpPost("AddPlayerToTeam")]
+        public async Task<IActionResult> AddPlayerToTeam(PlayerDTO player)
         {
             if (player == null || string.IsNullOrEmpty(player.PlayerName) || player.Height <= 0 || player.Age <= 0)
             {
@@ -84,28 +70,38 @@ namespace BeyondSportsAssignment.Controllers
             return Ok("Added Player");
         }
 
-        [HttpPut("{id}",Name = "UpdatePlayer")]
-        public async Task<IActionResult> PutPlayer(int id, PlayerDTO player)
+        [HttpPut("UpdatePlayer/{id}")]
+        public async Task<IActionResult> PutPlayer(int id, Player player)
         {
             if (id != player.Id)
             {
                 return BadRequest();
             }
 
-            var toUpdatePlayer = await _dbContext.Players.FindAsync(id);
-            if (toUpdatePlayer == null)
+            var playerToUpdate = await _dbContext.Players.FindAsync(id);
+            if (playerToUpdate == null || !TeamExists(player.CurrentTeamId))
             {
                 return NotFound();
             }
 
-            toUpdatePlayer.PlayerName = player.PlayerName;
-            toUpdatePlayer.Height = player.Height;
-            toUpdatePlayer.Age = player.Age;
-            if (toUpdatePlayer.CurrentTeamId != player.CurrentTeamId)
+            if (!string.IsNullOrEmpty(player.PlayerName))
             {
-                toUpdatePlayer.PreviousTeamId = toUpdatePlayer.CurrentTeamId;
-                toUpdatePlayer.LastTransferDate = DateTime.Now;
-                toUpdatePlayer.CurrentTeamId = player.CurrentTeamId;
+                playerToUpdate.PlayerName = player.PlayerName;
+            }
+            if (player.Height >= 0)
+            {
+                playerToUpdate.Height = player.Height;
+            }
+            if (player.Age >= 0)
+            {
+                playerToUpdate.Age = player.Age;
+            }
+
+            if (playerToUpdate.CurrentTeamId != player.CurrentTeamId)
+            {
+                playerToUpdate.PreviousTeamId = playerToUpdate.CurrentTeamId;
+                playerToUpdate.LastTransferDate = DateTime.Now;
+                playerToUpdate.CurrentTeamId = player.CurrentTeamId;
             }
 
             try
@@ -121,9 +117,30 @@ namespace BeyondSportsAssignment.Controllers
 
         }
 
+        [HttpDelete("DeletePlayer/{id}")]
+        [SwaggerOperation(OperationId = "DeletePlayer")]
+        public async Task<IActionResult> DeletePlayer(int id)
+        {
+            var player = await _dbContext.Players.FindAsync(id);
+            if (player == null)
+            {
+                return NotFound();
+            }
+
+            _dbContext.Players.Remove(player);
+            await _dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+
         private bool PlayerExists(int id)
         {
             return _dbContext.Players.Any(e => e.Id == id);
+        }
+        private bool TeamExists(int id)
+        {
+            return _dbContext.Teams.Any(e => e.Id == id);
         }
     }
 }

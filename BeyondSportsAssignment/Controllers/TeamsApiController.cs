@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BeyondSportsAssignment.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class TeamsApiController : ControllerBase
     {
         private readonly CreateDatabaseContext _dbContext;
@@ -16,13 +16,13 @@ namespace BeyondSportsAssignment.Controllers
             _dbContext = dbContext;
         }
 
-        [HttpGet(Name = "GetTeams")]
+        [HttpGet("GetTeams")]
         public async Task<List<Team>> GetTeams()
         {
             return await _dbContext.Teams.ToListAsync();
         }
 
-        [HttpPost("{name}", Name = "AddTeam")]
+        [HttpPost("AddTeam")]
         public async Task<IActionResult> AddTeam(string name)
         {
             if (string.IsNullOrEmpty(name))
@@ -39,6 +39,25 @@ namespace BeyondSportsAssignment.Controllers
                 nameof(GetTeams),
                 team
                 );
+        }
+
+        [HttpGet("GetPlayersFromTeam/{id}")]
+        public async Task<ActionResult<IEnumerable<Player>>> GetPlayersFromTeam(int id)
+        {
+            try
+            {
+                var players = await _dbContext.Players.Where(x => x.CurrentTeamId == id).ToListAsync();
+                if (players == null || players.Count == 0)
+                {
+                    return NotFound("No players found for the specified team.");
+                }
+                return Ok(players);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "An error occurred while fetching players for the specified team.");
+            }
         }
 
     }
