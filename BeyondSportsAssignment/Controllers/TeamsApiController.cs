@@ -2,6 +2,7 @@
 using BeyondSportsAssignment.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 namespace BeyondSportsAssignment.Controllers
 {
@@ -58,6 +59,40 @@ namespace BeyondSportsAssignment.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     "An error occurred while fetching players for the specified team.");
             }
+        }
+
+        [HttpGet("ExporttoCSV/{id}")]
+        public async Task<ActionResult<IEnumerable<Player>>> ExportPlayersFromTeamToCSV(int id)
+        {
+            var csv = new StringBuilder();
+
+            Team? team = await _dbContext.Teams.FindAsync(id);
+            if (team == null)
+            {
+                return NotFound();
+            }
+            List<Player> players = await _dbContext.Players.Where(p => p.CurrentTeamId == id).ToListAsync();
+
+            if (players.Count == 0)
+            {
+                return NoContent();
+            }
+
+            csv.AppendLine("PlayerName;Height;Age;TeamName;G/APerGame");
+
+            foreach (var player in players)
+            {
+
+                double ga =(double) (player.GoalsCurrentSeason + player.AssistsCurrentSeason) / (player.GamesPlayedCurrentSeason);
+                csv.AppendLine($"{player.PlayerName};{player.Height};{player.Age};{team.Name};{ga}");
+            }
+
+            var data = Encoding.UTF8.GetBytes(csv.ToString());
+
+            return new FileContentResult(data, "text/csv")
+            {
+                FileDownloadName = $"{DateTime.Now}_Info"
+            };
         }
 
     }

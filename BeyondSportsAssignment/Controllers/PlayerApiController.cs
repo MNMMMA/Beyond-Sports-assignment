@@ -61,7 +61,11 @@ namespace BeyondSportsAssignment.Controllers
                 PlayerName = player.PlayerName,
                 Height = player.Height,
                 Age = player.Age,
-                CurrentTeamId = player.CurrentTeamId
+                CurrentTeamId = player.CurrentTeamId,
+                GoalsCurrentSeason = player.GoalsCurrentSeason,
+                AssistsCurrentSeason = player.AssistsCurrentSeason,
+                GamesPlayedCurrentSeason = player.GamesPlayedCurrentSeason
+                
             };
 
             _dbContext.Players.Add(newPlayer);
@@ -96,6 +100,19 @@ namespace BeyondSportsAssignment.Controllers
             {
                 playerToUpdate.Age = player.Age;
             }
+            if (player.GoalsCurrentSeason >= 0)
+            {
+                playerToUpdate.GoalsCurrentSeason = player.GoalsCurrentSeason;
+            }
+            if(player.AssistsCurrentSeason >= 0)
+            {
+                playerToUpdate.AssistsCurrentSeason = player.AssistsCurrentSeason;
+            }
+            if(player.GamesPlayedCurrentSeason >= 0)
+            {
+                playerToUpdate.GamesPlayedCurrentSeason = player.GamesPlayedCurrentSeason;
+            }
+
 
             if (playerToUpdate.CurrentTeamId != player.CurrentTeamId)
             {

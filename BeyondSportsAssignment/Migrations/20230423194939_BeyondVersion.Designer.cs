@@ -4,6 +4,7 @@ using BeyondSportsAssignment.DBContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BeyondSportsAssignment.Migrations
 {
     [DbContext(typeof(CreateDatabaseContext))]
-    partial class CreateDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230423194939_BeyondVersion")]
+    partial class BeyondVersion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

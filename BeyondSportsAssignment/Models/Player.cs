@@ -9,5 +9,8 @@
         public int CurrentTeamId { get; set; }
         public DateTime? LastTransferDate { get; set; }
         public int? PreviousTeamId { get; set; }
+        public int GoalsCurrentSeason { get; set; }
+        public int AssistsCurrentSeason { get; set;  }
+        public int GamesPlayedCurrentSeason { get; set; }
     }
 }
